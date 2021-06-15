@@ -23,7 +23,12 @@ func InitAmfContext(context *context.AMFContext) {
 	if configuration.NgapIpList != nil {
 		context.NgapIpList = configuration.NgapIpList
 	} else {
-		context.NgapIpList = []string{"127.0.0.1"} // default localhost
+		context.NgapIpList = []string{os.Getenv("MY_POD_IP")}
+                if len(context.NgapIpList) > 0 {
+                        logger.UtilLog.Info("Parsing ServerIPv4 address from ENV Variable.")
+                } else {
+                        context.NgapIpList = []string{"127.0.0.1"} // default localhost
+                }
 	}
 	sbi := configuration.Sbi
 	if sbi.Scheme != "" {
