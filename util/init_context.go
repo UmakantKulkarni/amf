@@ -55,10 +55,7 @@ func InitAmfContext(context *context.AMFContext) {
 	context.RegisterIPv4 = factory.AMF_DEFAULT_IPV4 // default localhost
 	context.SBIPort = factory.AMF_DEFAULT_PORT_INT  // default port
 	if sbi != nil {
-		sbi.RegisterIPv4 = os.Getenv("MY_POD_IP")
-                if sbi.RegisterIPv4 != "" {
-                        logger.UtilLog.Info("Parsing RegisterIPv4 address from ENV Variable.")
-                } else {
+		if sbi.RegisterIPv4 != "" {
                         context.RegisterIPv4 = sbi.RegisterIPv4
                 }
 		if sbi.Port != 0 {
