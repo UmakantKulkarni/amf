@@ -12,6 +12,15 @@ import (
 	"github.com/free5gc/openapi/models"
 )
 
+func FindItem(slice []string, val string) (int, bool) {
+    for i, item := range slice {
+        if item == val {
+            return i, true
+        }
+    }
+    return -1, false
+}
+
 func InitAmfContext(context *context.AMFContext) {
 	config := factory.AmfConfig
 	logger.UtilLog.Infof("amfconfig Info: Version[%s] Description[%s]", config.Info.Version, config.Info.Description)
@@ -21,15 +30,21 @@ func InitAmfContext(context *context.AMFContext) {
 		context.Name = configuration.AmfName
 	}
 	if configuration.NgapIpList != nil {
-		context.NgapIpList = configuration.NgapIpList
-	} else {
-		context.NgapIpList = []string{os.Getenv("MY_POD_IP")}
+                _, found := FindItem(configuration.NgapIpList, "MY_POD_IP")
+                if !found {
+                        context.NgapIpList = configuration.NgapIpList
+                } else {
+                        logger.UtilLog.Info("configuration.NgapIpList is not nil. Parsing NgapIPv4 address from ENV Variable.")
+                        context.NgapIpList = []string{os.Getenv("MY_POD_IP")}
+                }
+        } else {
+                context.NgapIpList = []string{os.Getenv("MY_POD_IP")}
                 if len(context.NgapIpList) > 0 {
-                        logger.UtilLog.Info("Parsing ServerIPv4 address from ENV Variable.")
+                        logger.UtilLog.Info("Parsing NgapIPv4 address from ENV Variable.")
                 } else {
                         context.NgapIpList = []string{"127.0.0.1"} // default localhost
                 }
-	}
+        }
 	sbi := configuration.Sbi
 	if sbi.Scheme != "" {
 		context.UriScheme = models.UriScheme(sbi.Scheme)
@@ -40,9 +55,12 @@ func InitAmfContext(context *context.AMFContext) {
 	context.RegisterIPv4 = factory.AMF_DEFAULT_IPV4 // default localhost
 	context.SBIPort = factory.AMF_DEFAULT_PORT_INT  // default port
 	if sbi != nil {
-		if sbi.RegisterIPv4 != "" {
-			context.RegisterIPv4 = sbi.RegisterIPv4
-		}
+		sbi.RegisterIPv4 = os.Getenv("MY_POD_IP")
+                if sbi.RegisterIPv4 != "" {
+                        logger.UtilLog.Info("Parsing RegisterIPv4 address from ENV Variable.")
+                } else {
+                        context.RegisterIPv4 = sbi.RegisterIPv4
+                }
 		if sbi.Port != 0 {
 			context.SBIPort = sbi.Port
 		}
